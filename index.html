@@ -4,7 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Portal Absensi Magang - PT Titis Sampurna</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Firebase App & Realtime Database SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased">
 
@@ -19,7 +23,12 @@
         </div>
         <div>
           <h1 class="text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-tight">PT TITIS SAMPURNA</h1>
-          <p class="text-[11px] sm:text-xs text-slate-500">Presensi Mahasiswa Magang</p>
+          <p class="text-[11px] sm:text-xs text-slate-500 flex items-center gap-1.5">
+            Presensi Mahasiswa Magang
+            <span class="inline-flex items-center gap-1 text-[10px] text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded font-medium">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Online
+            </span>
+          </p>
         </div>
       </div>
       <!-- Jam Realtime -->
@@ -30,8 +39,7 @@
   <!-- Hero / Banner Section -->
   <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 w-full">
     <div class="relative w-full h-32 sm:h-44 rounded-2xl overflow-hidden bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-950 flex items-center px-6 sm:px-10 text-white shadow-sm border border-slate-200">
-      <!-- Background Gambar AI Banner -->
-      <img id="banner-image" src="assets/images/hero-banner.jpeg" alt="Banner" class="absolute inset-0 w-full h-full object-cover opacity-35" onerror="this.style.display='none';">
+      <img id="banner-image" src="assets/images/hero-banner.jpg" alt="Banner" class="absolute inset-0 w-full h-full object-cover opacity-35" onerror="this.style.display='none';">
       
       <div class="relative z-10 max-w-xl">
         <span class="text-[10px] sm:text-xs uppercase tracking-widest font-semibold text-blue-200 bg-blue-950/60 px-2.5 py-1 rounded-full border border-blue-400/20">Portal Presensi Resmi</span>
@@ -65,7 +73,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase mb-1">NIM / ID Magang</label>
-              <input type="text" id="student-id" required placeholder="Contoh: 062430320649" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <input type="text" id="student-id" required placeholder="Contoh: 0621403..." class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
             </div>
             <div>
               <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase mb-1">Asal Kampus</label>
@@ -75,7 +83,7 @@
 
           <div>
             <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase mb-1">Divisi / Penempatan</label>
-            <input type="text" id="division" required placeholder="Contoh: Operation / Maintenance" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <input type="text" id="division" required placeholder="Contoh: Engineering / Maintenance" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
           </div>
 
           <div class="grid grid-cols-2 gap-3">
@@ -98,7 +106,7 @@
 
           <div>
             <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase mb-1">Keterangan Singkat</label>
-            <textarea id="notes" rows="2" placeholder="Catatan harian, progres tugas, atau alasan izin/sakit..." class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+            <textarea id="notes" rows="2" placeholder="Catatan harian, tugas, atau alasan izin/sakit..." class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
           </div>
 
           <div class="flex gap-2 pt-1">
@@ -138,8 +146,8 @@
         <!-- Filter Toolbar -->
         <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 class="font-bold text-slate-900 text-sm sm:text-base">Riwayat Presensi</h2>
-            <p class="text-[11px] text-slate-400">Edit hanya diperbolehkan sebelum jam 09:00 pagi</p>
+            <h2 class="font-bold text-slate-900 text-sm sm:text-base">Riwayat Presensi Bersama</h2>
+            <p class="text-[11px] text-slate-400">Data terhubung cloud • Edit sebelum jam 09:00</p>
           </div>
 
           <div class="flex items-center gap-1.5 self-stretch sm:self-auto justify-between sm:justify-end">
@@ -182,24 +190,23 @@
   </main>
 
   <script>
-    // ===== PENGATURAN ADMIN & SISTEM =====
+    // ===== KONFIGURASI FIREBASE & SISTEM =====
+    const firebaseConfig = {
+      databaseURL: "https://absensi-pkl-pt-titis-sampurna-default-rtdb.firebaseio.com"
+    };
+
+    // Inisialisasi Firebase
+    firebase.initializeApp(firebaseConfig);
+    const dbRef = firebase.database().ref("attendances");
+
     const CONFIG = {
-      companyName: "PT TITIS SAMPURNA",
       adminPIN: "1234",
       editDeadlineHour: 9
     };
 
-    const STORAGE_KEY = "titis_sampurna_db";
+    let globalAttendanceList = [];
 
-    function getData() {
-      const data = localStorage.getItem(STORAGE_KEY);
-      return data ? JSON.parse(data) : [];
-    }
-
-    function saveData(records) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-    }
-
+    // Cek batas waktu edit (< 09:00 pagi pada hari yang sama)
     function isEditable(record) {
       const now = new Date();
       const todayString = now.toISOString().split('T')[0];
@@ -207,20 +214,39 @@
       return now.getHours() < CONFIG.editDeadlineHour;
     }
 
+    // Sinkronisasi Real-time dari Firebase
+    dbRef.on("value", (snapshot) => {
+      const data = snapshot.val();
+      globalAttendanceList = [];
+      
+      if (data) {
+        Object.keys(data).forEach((key) => {
+          globalAttendanceList.push({
+            firebaseId: key,
+            ...data[key]
+          });
+        });
+        // Urutkan dari yang paling baru
+        globalAttendanceList.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      }
+
+      render();
+    });
+
     function render() {
-      const allRecords = getData();
       const selectedDate = document.getElementById("filter-date").value;
       const tbody = document.getElementById("table-body");
       const mobileContainer = document.getElementById("mobile-cards-container");
       const emptyState = document.getElementById("empty-state");
 
       const filteredRecords = selectedDate 
-        ? allRecords.filter(r => r.rawDate === selectedDate)
-        : allRecords;
+        ? globalAttendanceList.filter(r => r.rawDate === selectedDate)
+        : globalAttendanceList;
 
+      // Update Angka Metrik
       document.getElementById("total-checkin").innerText = filteredRecords.length;
-      document.getElementById("total-present").innerText = filteredRecords.filter(r => r.status.includes("Hadir")).length;
-      document.getElementById("total-permission").innerText = filteredRecords.filter(r => !r.status.includes("Hadir")).length;
+      document.getElementById("total-present").innerText = filteredRecords.filter(r => r.status && r.status.includes("Hadir")).length;
+      document.getElementById("total-permission").innerText = filteredRecords.filter(r => r.status && !r.status.includes("Hadir")).length;
 
       if (filteredRecords.length === 0) {
         tbody.innerHTML = "";
@@ -256,7 +282,7 @@
             <td class="px-4 py-3 text-slate-500 text-xs">${item.notes}</td>
             <td class="px-4 py-3 text-center whitespace-nowrap">
               ${canEdit ? `
-                <button onclick="startEdit(${item.recordId})" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 font-semibold px-2.5 py-1 rounded-md transition-colors">
+                <button onclick="startEdit('${item.firebaseId}')" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 font-semibold px-2.5 py-1 rounded-md transition-colors">
                   ✏️ Edit
                 </button>
               ` : `
@@ -296,7 +322,7 @@
               <span>🕒 ${item.displayDate}, ${item.time}</span>
               <div>
                 ${canEdit ? `
-                  <button onclick="startEdit(${item.recordId})" class="text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                  <button onclick="startEdit('${item.firebaseId}')" class="text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
                     ✏️ Edit Absen
                   </button>
                 ` : `
@@ -317,10 +343,8 @@
       }, 1000);
     }
 
-    window.startEdit = function(recordId) {
-      const allRecords = getData();
-      const target = allRecords.find(r => r.recordId === recordId);
-
+    window.startEdit = function(firebaseId) {
+      const target = globalAttendanceList.find(r => r.firebaseId === firebaseId);
       if (!target) return;
 
       if (!isEditable(target)) {
@@ -328,7 +352,7 @@
         return;
       }
 
-      document.getElementById("edit-record-id").value = target.recordId;
+      document.getElementById("edit-record-id").value = target.firebaseId;
       document.getElementById("student-name").value = target.name;
       document.getElementById("student-id").value = target.id;
       document.getElementById("institution").value = target.institution || "";
@@ -361,41 +385,40 @@
       const today = new Date().toISOString().split('T')[0];
       document.getElementById("filter-date").value = today;
 
-      render();
-
       const form = document.getElementById("attendance-form");
       form.addEventListener("submit", function (e) {
         e.preventDefault();
 
         const editId = document.getElementById("edit-record-id").value;
-        const allRecords = getData();
         const now = new Date();
         const rawDate = now.toISOString().split('T')[0];
 
         if (editId) {
-          const index = allRecords.findIndex(r => r.recordId == editId);
-          if (index !== -1) {
-            if (!isEditable(allRecords[index])) {
-              alert("Gagal menyimpan: Batas waktu edit jam 09:00 telah lewat.");
-              resetFormState();
-              return;
-            }
-
-            allRecords[index].name = document.getElementById("student-name").value.trim();
-            allRecords[index].id = document.getElementById("student-id").value.trim();
-            allRecords[index].institution = document.getElementById("institution").value.trim();
-            allRecords[index].division = document.getElementById("division").value.trim();
-            allRecords[index].status = document.getElementById("attendance-status").value;
-            allRecords[index].type = document.getElementById("attendance-type").value;
-            allRecords[index].notes = document.getElementById("notes").value.trim() || "-";
-            allRecords[index].time = now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' }) + " (Diedit)";
-
-            saveData(allRecords);
-            alert("Data absensi berhasil diperbarui!");
+          const target = globalAttendanceList.find(r => r.firebaseId === editId);
+          if (!target || !isEditable(target)) {
+            alert("Gagal menyimpan: Batas waktu edit jam 09:00 telah lewat.");
+            resetFormState();
+            return;
           }
+
+          dbRef.child(editId).update({
+            name: document.getElementById("student-name").value.trim(),
+            id: document.getElementById("student-id").value.trim(),
+            institution: document.getElementById("institution").value.trim(),
+            division: document.getElementById("division").value.trim(),
+            status: document.getElementById("attendance-status").value,
+            type: document.getElementById("attendance-type").value,
+            notes: document.getElementById("notes").value.trim() || "-",
+            time: now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' }) + " (Diedit)"
+          }).then(() => {
+            alert("Data absensi berhasil diperbarui!");
+            resetFormState();
+          }).catch((err) => {
+            alert("Gagal memperbarui data: " + err.message);
+          });
+
         } else {
           const newEntry = {
-            recordId: Date.now(),
             name: document.getElementById("student-name").value.trim(),
             id: document.getElementById("student-id").value.trim(),
             institution: document.getElementById("institution").value.trim(),
@@ -405,16 +428,17 @@
             notes: document.getElementById("notes").value.trim() || "-",
             time: now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' }),
             displayDate: now.toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' }),
-            rawDate: rawDate
+            rawDate: rawDate,
+            createdAt: firebase.database.ServerValue.TIMESTAMP
           };
 
-          allRecords.unshift(newEntry);
-          saveData(allRecords);
-          document.getElementById("filter-date").value = rawDate;
+          dbRef.push(newEntry).then(() => {
+            document.getElementById("filter-date").value = rawDate;
+            resetFormState();
+          }).catch((err) => {
+            alert("Gagal mengirim absensi: " + err.message);
+          });
         }
-
-        resetFormState();
-        render();
       });
 
       document.getElementById("btn-cancel-edit").addEventListener("click", resetFormState);
@@ -427,10 +451,11 @@
       document.getElementById("btn-clear").addEventListener("click", () => {
         const enteredPin = prompt("🔒 Masukkan PIN Admin untuk menghapus riwayat:");
         if (enteredPin === CONFIG.adminPIN) {
-          if (confirm("Yakin ingin menghapus seluruh data?")) {
-            localStorage.removeItem(STORAGE_KEY);
-            resetFormState();
-            render();
+          if (confirm("Yakin ingin menghapus seluruh data presensi di cloud?")) {
+            dbRef.remove().then(() => {
+              resetFormState();
+              alert("Data cloud berhasil dibersihkan.");
+            });
           }
         } else if (enteredPin !== null) {
           alert("❌ PIN Salah!");
