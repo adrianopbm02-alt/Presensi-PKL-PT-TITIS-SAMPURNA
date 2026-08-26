@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Portal Absensi Magang - PT Titis Sampurna</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <!-- Logo Perusahaan -->
+        <div class="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-blue-900 font-bold text-sm overflow-hidden flex-shrink-0 p-1" id="logo-wrapper">
+          <img id="company-logo" src="assets/images/logo-perusahaan.png" alt="Logo" class="w-full h-full object-contain" onload="document.getElementById('company-initials').style.display='none';" onerror="this.style.display='none'; document.getElementById('company-initials').style.display='block';">
+          <span id="company-initials" style="display: none;">TS</span>
+        </div>
+        <div>
+          <h1 class="text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-tight">PT TITIS SAMPURNA</h1>
+          <p class="text-[11px] sm:text-xs text-slate-500">Presensi Mahasiswa Magang</p>
+        </div>
+      </div>
+      <!-- Jam Realtime -->
+      <div id="live-clock" class="text-[11px] sm:text-xs font-mono bg-slate-100 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-slate-600 font-medium whitespace-nowrap"></div>
+    </div>
+  </header>
+
+  <!-- Hero / Banner Section -->
+  <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 w-full">
+    <div class="relative w-full h-32 sm:h-44 rounded-2xl overflow-hidden bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-950 flex items-center px-6 sm:px-10 text-white shadow-sm border border-slate-200">
+      <!-- Background Gambar AI Banner -->
+      <img id="banner-image" src="assets/images/hero-banner.jpeg" alt="Banner" class="absolute inset-0 w-full h-full object-cover opacity-35" onerror="this.style.display='none';">
+      
+      <div class="relative z-10 max-w-xl">
+        <span class="text-[10px] sm:text-xs uppercase tracking-widest font-semibold text-blue-200 bg-blue-950/60 px-2.5 py-1 rounded-full border border-blue-400/20">Portal Presensi Resmi</span>
+        <h2 class="text-lg sm:text-2xl font-bold mt-1.5 sm:mt-2">Selamat Datang di PT Titis Sampurna</h2>
+        <p class="text-xs sm:text-sm text-slate-200 mt-0.5">Silakan catat kehadiran dan aktivitas harian magang Anda tepat waktu.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- Kolom Form Presensi -->
+    <div class="lg:col-span-4">
+      <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between mb-4">
+          <h2 id="form-title" class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2">
+            <span>📝</span> Form Absensi Harian
+          </h2>
+          <span id="edit-badge" class="hidden text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">Mode Edit</span>
+        </div>
+
+        <form id="attendance-form" class="space-y-3.5 sm:space-y-4">
+          <input type="hidden" id="edit-record-id" value="">
+
+          <div>
+            <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase mb-1">Nama Lengkap</label>
+            <input type="text" id="student-name" required placeholder="Contoh: Ridho Adriano" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase mb-1">NIM / ID Magang</label>
+              <input type="text" id="student-id" required placeholder="Contoh: 062430320649" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase mb-1">Asal Kampus</label>
+              <input type="text" id="institution" required placeholder="Contoh: Politeknik Negeri Sriwijaya" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase mb-1">Divisi / Penempatan</label>
+            <input type="text" id="division" required placeholder="Contoh: Operation / Maintenance" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase mb-1">Status</label>
+              <select id="attendance-status" class="w-full px-2.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+                <option value="Hadir (WFO)">Hadir (WFO)</option>
+                <option value="Izin">Izin</option>
+                <option value="Sakit">Sakit</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase mb-1">Tipe</label>
+              <select id="attendance-type" class="w-full px-2.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+                <option value="Masuk">Absen Masuk</option>
+                <option value="Pulang">Absen Pulang</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase mb-1">Keterangan Singkat</label>
+            <textarea id="notes" rows="2" placeholder="Catatan harian, progres tugas, atau alasan izin/sakit..." class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+          </div>
+
+          <div class="flex gap-2 pt-1">
+            <button type="submit" id="btn-submit" class="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-medium py-2.5 rounded-lg text-sm transition-colors shadow-sm text-center">
+              Kirim Presensi
+            </button>
+            <button type="button" id="btn-cancel-edit" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium px-4 py-2.5 rounded-lg text-sm transition-colors">
+              Batal
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Kolom History & Ringkasan -->
+    <div class="lg:col-span-8 space-y-5">
+      
+      <!-- Metrics Ringkasan -->
+      <div class="grid grid-cols-3 gap-2.5 sm:gap-4">
+        <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm text-center sm:text-left">
+          <p class="text-[10px] sm:text-xs text-slate-500 font-medium leading-tight">Total Absen</p>
+          <p id="total-checkin" class="text-lg sm:text-2xl font-bold text-slate-900 mt-0.5">0</p>
+        </div>
+        <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm text-center sm:text-left">
+          <p class="text-[10px] sm:text-xs text-slate-500 font-medium leading-tight">Hadir (WFO)</p>
+          <p id="total-present" class="text-lg sm:text-2xl font-bold text-emerald-600 mt-0.5">0</p>
+        </div>
+        <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm text-center sm:text-left">
+          <p class="text-[10px] sm:text-xs text-slate-500 font-medium leading-tight">Izin / Sakit</p>
+          <p id="total-permission" class="text-lg sm:text-2xl font-bold text-amber-600 mt-0.5">0</p>
+        </div>
+      </div>
+
+      <!-- Container History Data -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        
+        <!-- Filter Toolbar -->
+        <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="font-bold text-slate-900 text-sm sm:text-base">Riwayat Presensi</h2>
+            <p class="text-[11px] text-slate-400">Edit hanya diperbolehkan sebelum jam 09:00 pagi</p>
+          </div>
+
+          <div class="flex items-center gap-1.5 self-stretch sm:self-auto justify-between sm:justify-end">
+            <input type="date" id="filter-date" class="text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50 text-slate-700 font-medium flex-1 sm:flex-none">
+            <button id="btn-reset-filter" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-lg transition-colors font-medium">
+              Semua
+            </button>
+            <button id="btn-clear" type="button" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 px-2 py-1.5 rounded-lg transition-colors font-medium">
+              🔒 Hapus
+            </button>
+          </div>
+        </div>
+
+        <!-- Tampilan Card Khusus Layar HP -->
+        <div id="mobile-cards-container" class="divide-y divide-slate-100 block md:hidden"></div>
+
+        <!-- Tampilan Tabel untuk Desktop/Tablet -->
+        <div class="overflow-x-auto hidden md:block">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 text-slate-600 text-xs uppercase border-b border-slate-200">
+              <tr>
+                <th class="px-4 py-3">Waktu</th>
+                <th class="px-4 py-3">Mahasiswa</th>
+                <th class="px-4 py-3">Instansi & Divisi</th>
+                <th class="px-4 py-3">Status</th>
+                <th class="px-4 py-3">Keterangan</th>
+                <th class="px-4 py-3 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="table-body" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+        
+        <div id="empty-state" class="p-8 text-center text-slate-400">
+          Belum ada riwayat absensi untuk tanggal yang dipilih.
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // ===== PENGATURAN ADMIN & SISTEM =====
+    const CONFIG = {
+      companyName: "PT TITIS SAMPURNA",
+      adminPIN: "1234",
+      editDeadlineHour: 9
+    };
+
+    const STORAGE_KEY = "titis_sampurna_db";
+
+    function getData() {
+      const data = localStorage.getItem(STORAGE_KEY);
+      return data ? JSON.parse(data) : [];
+    }
+
+    function saveData(records) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    }
+
+    function isEditable(record) {
+      const now = new Date();
+      const todayString = now.toISOString().split('T')[0];
+      if (record.rawDate !== todayString) return false;
+      return now.getHours() < CONFIG.editDeadlineHour;
+    }
+
+    function render() {
+      const allRecords = getData();
+      const selectedDate = document.getElementById("filter-date").value;
+      const tbody = document.getElementById("table-body");
+      const mobileContainer = document.getElementById("mobile-cards-container");
+      const emptyState = document.getElementById("empty-state");
+
+      const filteredRecords = selectedDate 
+        ? allRecords.filter(r => r.rawDate === selectedDate)
+        : allRecords;
+
+      document.getElementById("total-checkin").innerText = filteredRecords.length;
+      document.getElementById("total-present").innerText = filteredRecords.filter(r => r.status.includes("Hadir")).length;
+      document.getElementById("total-permission").innerText = filteredRecords.filter(r => !r.status.includes("Hadir")).length;
+
+      if (filteredRecords.length === 0) {
+        tbody.innerHTML = "";
+        mobileContainer.innerHTML = "";
+        emptyState.style.display = "block";
+        return;
+      }
+
+      emptyState.style.display = "none";
+
+      // 1. Render Desktop Table
+      tbody.innerHTML = filteredRecords.map(item => {
+        const canEdit = isEditable(item);
+        return `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-4 py-3 whitespace-nowrap">
+              <span class="font-semibold text-slate-800">${item.time}</span>
+              <span class="text-xs text-slate-400 block">${item.displayDate}</span>
+            </td>
+            <td class="px-4 py-3">
+              <div class="font-medium text-slate-900">${item.name}</div>
+              <div class="text-xs text-slate-500 font-mono">${item.id}</div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="text-slate-800 font-medium text-xs">${item.institution || "-"}</div>
+              <div class="text-xs text-slate-500">${item.division}</div>
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap">
+              <span class="px-2 py-0.5 text-xs font-semibold rounded-full ${item.status.includes('Hadir') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                ${item.type}: ${item.status}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-slate-500 text-xs">${item.notes}</td>
+            <td class="px-4 py-3 text-center whitespace-nowrap">
+              ${canEdit ? `
+                <button onclick="startEdit(${item.recordId})" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 font-semibold px-2.5 py-1 rounded-md transition-colors">
+                  ✏️ Edit
+                </button>
+              ` : `
+                <span class="text-[11px] text-slate-400 italic">Terkunci</span>
+              `}
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      // 2. Render Mobile Cards
+      mobileContainer.innerHTML = filteredRecords.map(item => {
+        const canEdit = isEditable(item);
+        return `
+          <div class="p-4 space-y-2 hover:bg-slate-50 transition-colors">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="font-bold text-slate-900 text-sm">${item.name}</h3>
+                <p class="text-xs text-slate-500">${item.id} • ${item.institution || '-'}</p>
+              </div>
+              <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full ${item.status.includes('Hadir') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                ${item.type}: ${item.status}
+              </span>
+            </div>
+
+            <div class="text-xs text-slate-600">
+              <span class="font-medium text-slate-700">Divisi:</span> ${item.division}
+            </div>
+
+            ${item.notes !== '-' ? `
+              <div class="text-xs bg-slate-50 p-2 rounded border border-slate-100 text-slate-600">
+                ${item.notes}
+              </div>
+            ` : ''}
+
+            <div class="flex items-center justify-between pt-1 text-[11px] text-slate-400">
+              <span>🕒 ${item.displayDate}, ${item.time}</span>
+              <div>
+                ${canEdit ? `
+                  <button onclick="startEdit(${item.recordId})" class="text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                    ✏️ Edit Absen
+                  </button>
+                ` : `
+                  <span class="text-slate-400 italic">🔒 Terkunci (>09:00)</span>
+                `}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function startClock() {
+      const clockEl = document.getElementById("live-clock");
+      setInterval(() => {
+        const now = new Date();
+        clockEl.innerText = now.toLocaleDateString("id-ID", { weekday: 'short', day: 'numeric', month: 'short' }) + " • " + now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' });
+      }, 1000);
+    }
+
+    window.startEdit = function(recordId) {
+      const allRecords = getData();
+      const target = allRecords.find(r => r.recordId === recordId);
+
+      if (!target) return;
+
+      if (!isEditable(target)) {
+        alert("Waktu pengeditan sudah ditutup (Batas maksimal pukul 09:00 pagi).");
+        return;
+      }
+
+      document.getElementById("edit-record-id").value = target.recordId;
+      document.getElementById("student-name").value = target.name;
+      document.getElementById("student-id").value = target.id;
+      document.getElementById("institution").value = target.institution || "";
+      document.getElementById("division").value = target.division;
+      document.getElementById("attendance-status").value = target.status;
+      document.getElementById("attendance-type").value = target.type;
+      document.getElementById("notes").value = target.notes === "-" ? "" : target.notes;
+
+      document.getElementById("form-title").innerHTML = "<span>✏️</span> Edit Data Absensi";
+      document.getElementById("edit-badge").classList.remove("hidden");
+      document.getElementById("btn-submit").innerText = "Simpan Perubahan";
+      document.getElementById("btn-cancel-edit").classList.remove("hidden");
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    function resetFormState() {
+      const form = document.getElementById("attendance-form");
+      form.reset();
+      document.getElementById("edit-record-id").value = "";
+      document.getElementById("form-title").innerHTML = "<span>📝</span> Form Absensi Harian";
+      document.getElementById("edit-badge").classList.add("hidden");
+      document.getElementById("btn-submit").innerText = "Kirim Presensi";
+      document.getElementById("btn-cancel-edit").classList.add("hidden");
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      startClock();
+
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById("filter-date").value = today;
+
+      render();
+
+      const form = document.getElementById("attendance-form");
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const editId = document.getElementById("edit-record-id").value;
+        const allRecords = getData();
+        const now = new Date();
+        const rawDate = now.toISOString().split('T')[0];
+
+        if (editId) {
+          const index = allRecords.findIndex(r => r.recordId == editId);
+          if (index !== -1) {
+            if (!isEditable(allRecords[index])) {
+              alert("Gagal menyimpan: Batas waktu edit jam 09:00 telah lewat.");
+              resetFormState();
+              return;
+            }
+
+            allRecords[index].name = document.getElementById("student-name").value.trim();
+            allRecords[index].id = document.getElementById("student-id").value.trim();
+            allRecords[index].institution = document.getElementById("institution").value.trim();
+            allRecords[index].division = document.getElementById("division").value.trim();
+            allRecords[index].status = document.getElementById("attendance-status").value;
+            allRecords[index].type = document.getElementById("attendance-type").value;
+            allRecords[index].notes = document.getElementById("notes").value.trim() || "-";
+            allRecords[index].time = now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' }) + " (Diedit)";
+
+            saveData(allRecords);
+            alert("Data absensi berhasil diperbarui!");
+          }
+        } else {
+          const newEntry = {
+            recordId: Date.now(),
+            name: document.getElementById("student-name").value.trim(),
+            id: document.getElementById("student-id").value.trim(),
+            institution: document.getElementById("institution").value.trim(),
+            division: document.getElementById("division").value.trim(),
+            status: document.getElementById("attendance-status").value,
+            type: document.getElementById("attendance-type").value,
+            notes: document.getElementById("notes").value.trim() || "-",
+            time: now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' }),
+            displayDate: now.toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' }),
+            rawDate: rawDate
+          };
+
+          allRecords.unshift(newEntry);
+          saveData(allRecords);
+          document.getElementById("filter-date").value = rawDate;
+        }
+
+        resetFormState();
+        render();
+      });
+
+      document.getElementById("btn-cancel-edit").addEventListener("click", resetFormState);
+      document.getElementById("filter-date").addEventListener("change", render);
+      document.getElementById("btn-reset-filter").addEventListener("click", () => {
+        document.getElementById("filter-date").value = "";
+        render();
+      });
+
+      document.getElementById("btn-clear").addEventListener("click", () => {
+        const enteredPin = prompt("🔒 Masukkan PIN Admin untuk menghapus riwayat:");
+        if (enteredPin === CONFIG.adminPIN) {
+          if (confirm("Yakin ingin menghapus seluruh data?")) {
+            localStorage.removeItem(STORAGE_KEY);
+            resetFormState();
+            render();
+          }
+        } else if (enteredPin !== null) {
+          alert("❌ PIN Salah!");
+        }
+      });
+    });
+  </script>
+</body>
+</html>
