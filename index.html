@@ -39,10 +39,10 @@
   <!-- Hero / Banner Section -->
   <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 w-full">
     <div class="relative w-full h-32 sm:h-44 rounded-2xl overflow-hidden bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-950 flex items-center px-6 sm:px-10 text-white shadow-sm border border-slate-200">
-      <img id="banner-image" src="assets/images/hero-banner.jpg" alt="Banner" class="absolute inset-0 w-full h-full object-cover opacity-35" onerror="this.style.display='none';">
+      <img id="banner-image" src="assets/images/hero-banner.jpeg" alt="Banner" class="absolute inset-0 w-full h-full object-cover opacity-35" onerror="this.style.display='none';">
       
       <div class="relative z-10 max-w-xl">
-        <span class="text-[10px] sm:text-xs uppercase tracking-widest font-semibold text-blue-200 bg-blue-950/60 px-2.5 py-1 rounded-full border border-blue-400/20">Portal Presensi Resmi</span>
+        <span class="text-[10px] sm:text-xs uppercase tracking-widest font-semibold text-blue-200 bg-blue-950/60 px-2.5 py-1 rounded-full border border-blue-400/20">Portal Presensi</span>
         <h2 class="text-lg sm:text-2xl font-bold mt-1.5 sm:mt-2">Selamat Datang di PT Titis Sampurna</h2>
         <p class="text-xs sm:text-sm text-slate-200 mt-0.5">Silakan catat kehadiran dan aktivitas harian magang Anda tepat waktu.</p>
       </div>
@@ -162,11 +162,18 @@
             <p class="text-[11px] text-slate-400">Data terhubung cloud • Edit sebelum jam 09:00</p>
           </div>
 
-          <div class="flex items-center gap-1.5 self-stretch sm:self-auto justify-between sm:justify-end">
-            <input type="date" id="filter-date" class="text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50 text-slate-700 font-medium flex-1 sm:flex-none">
-            <button id="btn-reset-filter" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-lg transition-colors font-medium">
+          <div class="flex flex-wrap items-center gap-1.5 self-stretch sm:self-auto justify-between sm:justify-end">
+            <input type="date" id="filter-date" class="text-xs border border-slate-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50 text-slate-700 font-medium flex-1 sm:flex-none">
+            
+            <button id="btn-reset-filter" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1.5 rounded-lg transition-colors font-medium">
               Semua
             </button>
+
+            <!-- Tombol Salin Format WA -->
+            <button id="btn-copy-template" type="button" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
+              <span>📋</span> Salin Rekap WA
+            </button>
+
             <button id="btn-clear" type="button" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 px-2 py-1.5 rounded-lg transition-colors font-medium">
               🔒 Hapus
             </button>
@@ -254,22 +261,28 @@
             ...data[key]
           });
         });
-        // Urutkan dari yang terbaru
-        globalAttendanceList.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        // Urutkan dari yang paling awal masuk untuk urutan list nomor
+        globalAttendanceList.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
       }
 
       render();
     });
 
-    function render() {
+    function getFilteredRecords() {
       const selectedDate = document.getElementById("filter-date").value;
+      return selectedDate 
+        ? globalAttendanceList.filter(r => r.rawDate === selectedDate)
+        : globalAttendanceList;
+    }
+
+    function render() {
+      const filteredRecords = getFilteredRecords();
       const tbody = document.getElementById("table-body");
       const mobileContainer = document.getElementById("mobile-cards-container");
       const emptyState = document.getElementById("empty-state");
 
-      const filteredRecords = selectedDate 
-        ? globalAttendanceList.filter(r => r.rawDate === selectedDate)
-        : globalAttendanceList;
+      // Tampilkan list terbalik di tabel agar yang terbaru ada di atas
+      const displayRecords = [...filteredRecords].reverse();
 
       // Update Angka Metrik
       document.getElementById("total-checkin").innerText = filteredRecords.length;
@@ -285,8 +298,8 @@
 
       emptyState.style.display = "none";
 
-      // 1. Render Desktop Table (Tanpa NIM)
-      tbody.innerHTML = filteredRecords.map(item => {
+      // 1. Render Desktop Table
+      tbody.innerHTML = displayRecords.map(item => {
         const canEdit = isEditable(item);
         return `
           <tr class="hover:bg-slate-50 transition-colors">
@@ -320,8 +333,8 @@
         `;
       }).join("");
 
-      // 2. Render Mobile Cards (Tanpa NIM)
-      mobileContainer.innerHTML = filteredRecords.map(item => {
+      // 2. Render Mobile Cards
+      mobileContainer.innerHTML = displayRecords.map(item => {
         const canEdit = isEditable(item);
         return `
           <div class="p-4 space-y-2 hover:bg-slate-50 transition-colors">
@@ -370,6 +383,60 @@
       }, 1000);
     }
 
+    // Fungsi Format Tanggal DD/MM/YY
+    function getFormattedDateLMT(dateString) {
+      let d = dateString ? new Date(dateString) : new Date();
+      if (isNaN(d.getTime())) d = new Date();
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yy = String(d.getFullYear()).slice(-2);
+      return `${dd}/${mm}/${yy}`;
+    }
+
+    // Fungsi Salin Rekap Template WA
+    function copyWhatsAppTemplate() {
+      const selectedDate = document.getElementById("filter-date").value;
+      const filtered = getFilteredRecords();
+      const dateTag = getFormattedDateLMT(selectedDate);
+
+      // Pisahkan hadir dan tidak hadir
+      const hadirList = filtered.filter(r => r.status && r.status.includes("Hadir"));
+      const tidakHadirList = filtered.filter(r => r.status && !r.status.includes("Hadir"));
+
+      let template = `List yang masuk hari ini LMT ${dateTag}\n`;
+      if (hadirList.length === 0) {
+        template += `- (Belum ada data)\n`;
+      } else {
+        hadirList.forEach((item, index) => {
+          template += `  ${index + 1}. ${item.name}\n`;
+        });
+      }
+
+      template += `\nList yang tidak hadir hari ini LMT ${dateTag}\n`;
+      if (tidakHadirList.length === 0) {
+        template += `- (Nihil)\n`;
+      } else {
+        tidakHadirList.forEach((item, index) => {
+          const noteText = item.notes && item.notes !== '-' ? item.notes : item.status;
+          template += `  ${index + 1}. ${item.name}(${noteText})\n`;
+        });
+      }
+
+      // Salin ke Clipboard
+      navigator.clipboard.writeText(template).then(() => {
+        alert("✅ Format rekap berhasil disalin ke clipboard! Silakan paste langsung di WhatsApp.");
+      }).catch(err => {
+        // Fallback jika permission clipboard browser dibatasi
+        const textarea = document.createElement("textarea");
+        textarea.value = template;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        alert("✅ Format rekap berhasil disalin ke clipboard! Silakan paste langsung di WhatsApp.");
+      });
+    }
+
     window.startEdit = function(firebaseId) {
       const target = globalAttendanceList.find(r => r.firebaseId === firebaseId);
       if (!target) return;
@@ -382,7 +449,6 @@
       document.getElementById("edit-record-id").value = target.firebaseId;
       document.getElementById("student-name").value = target.name;
       
-      // Set dropdown instansi
       const options = ["Politeknik Negeri Sriwijaya", "PEM Akamigas", "Universitas Muhammadiyah", "SMK N 3 Baturaja"];
       if (options.includes(target.institution)) {
         institutionSelect.value = target.institution;
@@ -433,7 +499,6 @@
         const now = new Date();
         const rawDate = now.toISOString().split('T')[0];
 
-        // Dapatkan nama instansi (dari select atau input teks)
         let finalInstitution = institutionSelect.value;
         if (finalInstitution === "OTHER") {
           finalInstitution = customInstInput.value.trim();
@@ -485,6 +550,7 @@
         }
       });
 
+      document.getElementById("btn-copy-template").addEventListener("click", copyWhatsAppTemplate);
       document.getElementById("btn-cancel-edit").addEventListener("click", resetFormState);
       document.getElementById("filter-date").addEventListener("change", render);
       document.getElementById("btn-reset-filter").addEventListener("click", () => {
