@@ -9,8 +9,42 @@
   <!-- Firebase App & Realtime Database SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <style>
+    @keyframes slideInDown {
+      from { transform: translateY(-100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .toast-animate {
+      animation: slideInDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased">
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased relative">
+
+  <!-- Toast Notification Floating Container -->
+  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full px-4 sm:px-0 pointer-events-none"></div>
+
+  <!-- Modal Popup Konfirmasi Sukses Absen -->
+  <div id="success-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl transform transition-all scale-95 duration-200" id="modal-card">
+      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
+        ✓
+      </div>
+      <h3 class="text-lg font-bold text-slate-900" id="modal-title">Presensi Berhasil!</h3>
+      <p class="text-xs text-slate-500 mt-1" id="modal-subtitle">Data presensi Anda telah tersimpan secara online di database.</p>
+      
+      <div class="bg-slate-50 border border-slate-100 rounded-xl p-3.5 mt-4 text-left text-xs space-y-1.5">
+        <div class="flex justify-between"><span class="text-slate-400">Nama:</span> <span class="font-bold text-slate-800" id="modal-name">-</span></div>
+        <div class="flex justify-between"><span class="text-slate-400">Instansi:</span> <span class="font-medium text-slate-700" id="modal-inst">-</span></div>
+        <div class="flex justify-between"><span class="text-slate-400">Status:</span> <span class="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded" id="modal-status">-</span></div>
+        <div class="flex justify-between"><span class="text-slate-400">Waktu:</span> <span class="font-mono text-slate-600" id="modal-time">-</span></div>
+      </div>
+
+      <button onclick="closeSuccessModal()" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-medium py-2.5 rounded-xl text-sm mt-5 transition-colors shadow-sm">
+        Tutup & Selesai
+      </button>
+    </div>
+  </div>
 
   <!-- Header -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
@@ -225,6 +259,43 @@
 
     let globalAttendanceList = [];
 
+    // Sistem Notifikasi Toast Interaktif
+    function showToast(message, type = "success") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      toast.className = `pointer-events-auto p-3.5 rounded-xl shadow-lg border text-xs font-medium flex items-center gap-2.5 text-white toast-animate ${
+        type === "success" 
+          ? "bg-slate-900/95 border-emerald-500/40 text-slate-100" 
+          : "bg-rose-900/95 border-rose-500/40 text-white"
+      }`;
+      
+      const icon = type === "success" ? "✅" : "⚠️";
+      toast.innerHTML = `<span>${icon}</span><span class="flex-1">${message}</span>`;
+      
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(-10px)";
+        toast.style.transition = "all 0.3s ease";
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // Modal Popup Konfirmasi Sukses
+    function openSuccessModal(record) {
+      document.getElementById("modal-name").innerText = record.name;
+      document.getElementById("modal-inst").innerText = record.institution;
+      document.getElementById("modal-status").innerText = `${record.type}: ${record.status}`;
+      document.getElementById("modal-time").innerText = `${record.displayDate}, ${record.time}`;
+      
+      const modal = document.getElementById("success-modal");
+      modal.classList.remove("hidden");
+    }
+
+    function closeSuccessModal() {
+      document.getElementById("success-modal").classList.add("hidden");
+    }
+
     // Tampilkan / Sembunyikan Input Manual Instansi
     const institutionSelect = document.getElementById("institution-select");
     const customInstContainer = document.getElementById("custom-institution-container");
@@ -261,7 +332,6 @@
             ...data[key]
           });
         });
-        // Urutkan dari yang paling awal masuk untuk urutan list nomor
         globalAttendanceList.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
       }
 
@@ -281,7 +351,6 @@
       const mobileContainer = document.getElementById("mobile-cards-container");
       const emptyState = document.getElementById("empty-state");
 
-      // Tampilkan list terbalik di tabel agar yang terbaru ada di atas
       const displayRecords = [...filteredRecords].reverse();
 
       // Update Angka Metrik
@@ -383,7 +452,6 @@
       }, 1000);
     }
 
-    // Fungsi Format Tanggal DD/MM/YY
     function getFormattedDateLMT(dateString) {
       let d = dateString ? new Date(dateString) : new Date();
       if (isNaN(d.getTime())) d = new Date();
@@ -393,13 +461,11 @@
       return `${dd}/${mm}/${yy}`;
     }
 
-    // Fungsi Salin Rekap Template WA
     function copyWhatsAppTemplate() {
       const selectedDate = document.getElementById("filter-date").value;
       const filtered = getFilteredRecords();
       const dateTag = getFormattedDateLMT(selectedDate);
 
-      // Pisahkan hadir dan tidak hadir
       const hadirList = filtered.filter(r => r.status && r.status.includes("Hadir"));
       const tidakHadirList = filtered.filter(r => r.status && !r.status.includes("Hadir"));
 
@@ -422,19 +488,25 @@
         });
       }
 
-      // Salin ke Clipboard
-      navigator.clipboard.writeText(template).then(() => {
-        alert("✅ Format rekap berhasil disalin ke clipboard! Silakan paste langsung di WhatsApp.");
-      }).catch(err => {
-        // Fallback jika permission clipboard browser dibatasi
-        const textarea = document.createElement("textarea");
-        textarea.value = template;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
-        alert("✅ Format rekap berhasil disalin ke clipboard! Silakan paste langsung di WhatsApp.");
-      });
+      const executeCopy = () => {
+        showToast("Format rekap WhatsApp berhasil disalin ke clipboard!");
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(template).then(executeCopy).catch(() => fallbackCopy(template));
+      } else {
+        fallbackCopy(template);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      showToast("Format rekap WhatsApp berhasil disalin!");
     }
 
     window.startEdit = function(firebaseId) {
@@ -442,7 +514,7 @@
       if (!target) return;
 
       if (!isEditable(target)) {
-        alert("Waktu pengeditan sudah ditutup (Batas maksimal pukul 09:00 pagi).");
+        showToast("Waktu pengeditan sudah ditutup (Batas maksimal jam 09:00 pagi).", "error");
         return;
       }
 
@@ -471,6 +543,7 @@
       document.getElementById("btn-cancel-edit").classList.remove("hidden");
 
       window.scrollTo({ top: 0, behavior: "smooth" });
+      showToast("Mode edit aktif. Ubah data lalu klik 'Simpan Perubahan'.");
     };
 
     function resetFormState() {
@@ -507,7 +580,7 @@
         if (editId) {
           const target = globalAttendanceList.find(r => r.firebaseId === editId);
           if (!target || !isEditable(target)) {
-            alert("Gagal menyimpan: Batas waktu edit jam 09:00 telah lewat.");
+            showToast("Gagal menyimpan: Batas waktu edit jam 09:00 telah lewat.", "error");
             resetFormState();
             return;
           }
@@ -521,10 +594,10 @@
             notes: document.getElementById("notes").value.trim() || "-",
             time: now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' }) + " (Diedit)"
           }).then(() => {
-            alert("Data absensi berhasil diperbarui!");
+            showToast("Data absensi berhasil diperbarui!");
             resetFormState();
           }).catch((err) => {
-            alert("Gagal memperbarui data: " + err.message);
+            showToast("Gagal memperbarui data: " + err.message, "error");
           });
 
         } else {
@@ -543,9 +616,11 @@
 
           dbRef.push(newEntry).then(() => {
             document.getElementById("filter-date").value = rawDate;
+            openSuccessModal(newEntry);
+            showToast("Presensi berhasil dikirim!");
             resetFormState();
           }).catch((err) => {
-            alert("Gagal mengirim absensi: " + err.message);
+            showToast("Gagal mengirim absensi: " + err.message, "error");
           });
         }
       });
@@ -564,11 +639,11 @@
           if (confirm("Yakin ingin menghapus seluruh data presensi di cloud?")) {
             dbRef.remove().then(() => {
               resetFormState();
-              alert("Data cloud berhasil dibersihkan.");
+              showToast("Seluruh data absensi berhasil dibersihkan.");
             });
           }
         } else if (enteredPin !== null) {
-          alert("❌ PIN Salah!");
+          showToast("PIN Admin salah! Akses ditolak.", "error");
         }
       });
     });
