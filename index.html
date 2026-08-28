@@ -123,29 +123,21 @@
             <input type="text" id="custom-institution" placeholder="Ketik nama instansi sekolah/kampus..." class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
           </div>
 
-          <!-- Pilihan Divisi -->
-          <div>
-            <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase mb-1">Divisi / Penempatan</label>
-            <select id="division" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
-              <option value="Maintenance">Maintenance</option>
-              <option value="Operation">Operation</option>
-            </select>
-          </div>
-
+          <!-- Pilihan Divisi & Status -->
           <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase mb-1">Divisi</label>
+              <select id="division" required class="w-full px-2.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+                <option value="Maintenance">Maintenance</option>
+                <option value="Operation">Operation</option>
+              </select>
+            </div>
             <div>
               <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase mb-1">Status</label>
               <select id="attendance-status" class="w-full px-2.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
                 <option value="Hadir (WFO)">Hadir (WFO)</option>
                 <option value="Izin">Izin</option>
                 <option value="Sakit">Sakit</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase mb-1">Tipe</label>
-              <select id="attendance-type" class="w-full px-2.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
-                <option value="Masuk">Absen Masuk</option>
-                <option value="Pulang">Absen Pulang</option>
               </select>
             </div>
           </div>
@@ -193,7 +185,7 @@
         <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 class="font-bold text-slate-900 text-sm sm:text-base">Riwayat Presensi Bersama</h2>
-            <p class="text-[11px] text-slate-400">Data terhubung cloud • Edit sebelum jam 09:00</p>
+            <p class="text-[11px] text-slate-400">Edit hanya untuk data sendiri sebelum jam 09:00</p>
           </div>
 
           <div class="flex flex-wrap items-center gap-1.5 self-stretch sm:self-auto justify-between sm:justify-end">
@@ -248,7 +240,6 @@
       databaseURL: "https://absensi-pkl-pt-titis-sampurna-default-rtdb.firebaseio.com"
     };
 
-    // Inisialisasi Firebase
     firebase.initializeApp(firebaseConfig);
     const dbRef = firebase.database().ref("attendances");
 
@@ -257,9 +248,20 @@
       editDeadlineHour: 9
     };
 
+    // Identitas Unik Perangkat untuk Membatasi Edit Hanya Milik Sendiri
+    function getDeviceOwnerToken() {
+      let token = localStorage.getItem("magang_device_owner_token");
+      if (!token) {
+        token = "user_" + Math.random().toString(36).substr(2, 9) + "_" + Date.now();
+        localStorage.setItem("magang_device_owner_token", token);
+      }
+      return token;
+    }
+
+    const currentDeviceToken = getDeviceOwnerToken();
     let globalAttendanceList = [];
 
-    // Sistem Notifikasi Toast Interaktif
+    // Notifikasi Toast
     function showToast(message, type = "success") {
       const container = document.getElementById("toast-container");
       const toast = document.createElement("div");
@@ -281,22 +283,19 @@
       }, 3500);
     }
 
-    // Modal Popup Konfirmasi Sukses
     function openSuccessModal(record) {
       document.getElementById("modal-name").innerText = record.name;
       document.getElementById("modal-inst").innerText = record.institution;
-      document.getElementById("modal-status").innerText = `${record.type}: ${record.status}`;
+      document.getElementById("modal-status").innerText = record.status;
       document.getElementById("modal-time").innerText = `${record.displayDate}, ${record.time}`;
       
-      const modal = document.getElementById("success-modal");
-      modal.classList.remove("hidden");
+      document.getElementById("success-modal").classList.remove("hidden");
     }
 
     function closeSuccessModal() {
       document.getElementById("success-modal").classList.add("hidden");
     }
 
-    // Tampilkan / Sembunyikan Input Manual Instansi
     const institutionSelect = document.getElementById("institution-select");
     const customInstContainer = document.getElementById("custom-institution-container");
     const customInstInput = document.getElementById("custom-institution");
@@ -312,15 +311,21 @@
       }
     });
 
-    // Cek batas waktu edit (< 09:00 pagi pada hari yang sama)
+    // Pengecekan Hak Akses Edit: Harus dibuat di HP/browser yang sama DAN sebelum jam 09:00 hari ini
     function isEditable(record) {
       const now = new Date();
       const todayString = now.toISOString().split('T')[0];
+
+      // Hanya pemilik data yang bisa edit
+      if (record.deviceToken !== currentDeviceToken) return false;
+
+      // Hanya data hari ini
       if (record.rawDate !== todayString) return false;
+
+      // Batas waktu jam 09:00
       return now.getHours() < CONFIG.editDeadlineHour;
     }
 
-    // Sinkronisasi Real-time dari Firebase
     dbRef.on("value", (snapshot) => {
       const data = snapshot.val();
       globalAttendanceList = [];
@@ -353,7 +358,6 @@
 
       const displayRecords = [...filteredRecords].reverse();
 
-      // Update Angka Metrik
       document.getElementById("total-checkin").innerText = filteredRecords.length;
       document.getElementById("total-present").innerText = filteredRecords.filter(r => r.status && r.status.includes("Hadir")).length;
       document.getElementById("total-permission").innerText = filteredRecords.filter(r => r.status && !r.status.includes("Hadir")).length;
@@ -370,6 +374,7 @@
       // 1. Render Desktop Table
       tbody.innerHTML = displayRecords.map(item => {
         const canEdit = isEditable(item);
+        const isMine = item.deviceToken === currentDeviceToken;
         return `
           <tr class="hover:bg-slate-50 transition-colors">
             <td class="px-4 py-3 whitespace-nowrap">
@@ -377,7 +382,10 @@
               <span class="text-xs text-slate-400 block">${item.displayDate}</span>
             </td>
             <td class="px-4 py-3">
-              <div class="font-medium text-slate-900">${item.name}</div>
+              <div class="font-medium text-slate-900 flex items-center gap-1.5">
+                ${item.name}
+                ${isMine ? '<span class="text-[9px] bg-blue-100 text-blue-700 font-bold px-1.5 py-0.2 rounded">Saya</span>' : ''}
+              </div>
             </td>
             <td class="px-4 py-3">
               <div class="text-slate-800 font-medium text-xs">${item.institution || "-"}</div>
@@ -385,7 +393,7 @@
             </td>
             <td class="px-4 py-3 whitespace-nowrap">
               <span class="px-2 py-0.5 text-xs font-semibold rounded-full ${item.status.includes('Hadir') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
-                ${item.type}: ${item.status}
+                ${item.status}
               </span>
             </td>
             <td class="px-4 py-3 text-slate-500 text-xs">${item.notes}</td>
@@ -405,15 +413,19 @@
       // 2. Render Mobile Cards
       mobileContainer.innerHTML = displayRecords.map(item => {
         const canEdit = isEditable(item);
+        const isMine = item.deviceToken === currentDeviceToken;
         return `
           <div class="p-4 space-y-2 hover:bg-slate-50 transition-colors">
             <div class="flex items-start justify-between">
               <div>
-                <h3 class="font-bold text-slate-900 text-sm">${item.name}</h3>
+                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                  ${item.name}
+                  ${isMine ? '<span class="text-[9px] bg-blue-100 text-blue-700 font-bold px-1.5 py-0.2 rounded">Saya</span>' : ''}
+                </h3>
                 <p class="text-xs text-slate-500">${item.institution || '-'}</p>
               </div>
               <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full ${item.status.includes('Hadir') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
-                ${item.type}: ${item.status}
+                ${item.status}
               </span>
             </div>
 
@@ -435,7 +447,7 @@
                     ✏️ Edit Absen
                   </button>
                 ` : `
-                  <span class="text-slate-400 italic">🔒 Terkunci (>09:00)</span>
+                  <span class="text-slate-400 italic">🔒 Terkunci</span>
                 `}
               </div>
             </div>
@@ -514,7 +526,7 @@
       if (!target) return;
 
       if (!isEditable(target)) {
-        showToast("Waktu pengeditan sudah ditutup (Batas maksimal jam 09:00 pagi).", "error");
+        showToast("Akses ditolak: Anda hanya dapat mengedit absensi milik sendiri sebelum jam 09:00 pagi.", "error");
         return;
       }
 
@@ -534,7 +546,6 @@
 
       document.getElementById("division").value = target.division || "Maintenance";
       document.getElementById("attendance-status").value = target.status;
-      document.getElementById("attendance-type").value = target.type;
       document.getElementById("notes").value = target.notes === "-" ? "" : target.notes;
 
       document.getElementById("form-title").innerHTML = "<span>✏️</span> Edit Data Absensi";
@@ -543,7 +554,7 @@
       document.getElementById("btn-cancel-edit").classList.remove("hidden");
 
       window.scrollTo({ top: 0, behavior: "smooth" });
-      showToast("Mode edit aktif. Ubah data lalu klik 'Simpan Perubahan'.");
+      showToast("Mode edit aktif. Silakan perbaiki data presensi Anda.");
     };
 
     function resetFormState() {
@@ -580,7 +591,7 @@
         if (editId) {
           const target = globalAttendanceList.find(r => r.firebaseId === editId);
           if (!target || !isEditable(target)) {
-            showToast("Gagal menyimpan: Batas waktu edit jam 09:00 telah lewat.", "error");
+            showToast("Gagal menyimpan: Batas waktu edit telah lewat atau data bukan milik Anda.", "error");
             resetFormState();
             return;
           }
@@ -590,11 +601,10 @@
             institution: finalInstitution,
             division: document.getElementById("division").value,
             status: document.getElementById("attendance-status").value,
-            type: document.getElementById("attendance-type").value,
             notes: document.getElementById("notes").value.trim() || "-",
             time: now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' }) + " (Diedit)"
           }).then(() => {
-            showToast("Data absensi berhasil diperbarui!");
+            showToast("Data absensi Anda berhasil diperbarui!");
             resetFormState();
           }).catch((err) => {
             showToast("Gagal memperbarui data: " + err.message, "error");
@@ -602,11 +612,11 @@
 
         } else {
           const newEntry = {
+            deviceToken: currentDeviceToken,
             name: document.getElementById("student-name").value.trim(),
             institution: finalInstitution,
             division: document.getElementById("division").value,
             status: document.getElementById("attendance-status").value,
-            type: document.getElementById("attendance-type").value,
             notes: document.getElementById("notes").value.trim() || "-",
             time: now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' }),
             displayDate: now.toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' }),
@@ -617,7 +627,7 @@
           dbRef.push(newEntry).then(() => {
             document.getElementById("filter-date").value = rawDate;
             openSuccessModal(newEntry);
-            showToast("Presensi berhasil dikirim!");
+            showToast("Presensi berhasil terkirim!");
             resetFormState();
           }).catch((err) => {
             showToast("Gagal mengirim absensi: " + err.message, "error");
